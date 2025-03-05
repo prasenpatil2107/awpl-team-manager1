@@ -1,12 +1,14 @@
 export interface User {
     id?: number;
     name: string;
-    leg?: string;
+    leg?: 'Bonus' | 'Incentive' | null;
     added_under_id?: number;
     mobile_no?: string;
     address?: string;
     work?: string;
     remarks?: string;
+    userid?: string;
+    password?: string;
 }
 
 export interface Product {

@@ -1,6 +1,48 @@
 import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import { open, Database } from 'sqlite';
 import path from 'path';
+
+// Add this function to handle migrations
+async function migrateDatabase(db: Database) {
+    try {
+        // Backup existing users
+        const users = await db.all('SELECT * FROM users');
+        
+        // Drop and recreate users table
+        await db.exec('DROP TABLE IF EXISTS users');
+        
+        // Create new users table with userid and password columns
+        await db.exec(`
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                leg TEXT CHECK (leg IN ('Bonus', 'Incentive') OR leg IS NULL),
+                added_under_id INTEGER,
+                mobile_no TEXT,
+                address TEXT,
+                work TEXT,
+                remarks TEXT,
+                userid TEXT UNIQUE,
+                password TEXT,
+                FOREIGN KEY (added_under_id) REFERENCES users(id)
+            )
+        `);
+
+        // Restore user data
+        for (const user of users) {
+            await db.run(
+                `INSERT INTO users (id, name, leg, added_under_id, mobile_no, address, work, remarks)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [user.id, user.name, user.leg, user.added_under_id, user.mobile_no, user.address, user.work, user.remarks]
+            );
+        }
+
+        console.log('Database migration completed successfully');
+    } catch (error) {
+        console.error('Migration failed:', error);
+        throw error;
+    }
+}
 
 export async function initializeDatabase() {
     // Enable verbose mode for debugging
@@ -14,22 +56,8 @@ export async function initializeDatabase() {
 
         console.log('Database connected successfully');
 
-        // Users table
-        await db.exec(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                leg TEXT CHECK (leg IN ('Bonus', 'Incentive') OR leg IS NULL),
-                added_under_id INTEGER,
-                mobile_no TEXT,
-                address TEXT,
-                work TEXT,
-                remarks TEXT,
-                FOREIGN KEY (added_under_id) REFERENCES users(id)
-            )
-        `);
-
-        console.log('Users table created successfully');
+        // Run migration
+        await migrateDatabase(db);
 
         // Products table
         await db.exec(`

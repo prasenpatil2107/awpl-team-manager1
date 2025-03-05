@@ -7,6 +7,8 @@ export interface User {
     address?: string;
     work?: string;
     remarks?: string;
+    userid?: string;
+    password?: string;
 }
 
 export interface Product {

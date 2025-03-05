@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TextField,
   MenuItem,
   Grid,
   Button,
   Box,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { User } from '../types';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 interface UserFormProps {
   user: Partial<User>;
@@ -17,6 +20,7 @@ interface UserFormProps {
 
 const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = false }) => {
   const [formData, setFormData] = React.useState<Partial<User>>(user);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +114,38 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             onChange={handleChange}
             multiline
             rows={3}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="User ID"
+            name="userid"
+            value={formData.userid || ''}
+            onChange={handleChange}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password || ''}
+            onChange={handleChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={12}>

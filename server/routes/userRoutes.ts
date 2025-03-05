@@ -44,14 +44,18 @@ export default function userRoutes(db: Database) {
     // Create new user
     router.post('/', async (req, res) => {
         try {
-            const { name, leg, added_under_id, mobile_no, address, work, remarks } = req.body;
+            const { name, leg, added_under_id, mobile_no, address, work, remarks, userid, password } = req.body;
             
-            console.log('Creating user with data:', req.body); // Debug log
+            // Check if userid already exists
+            const existingUser = await db.get('SELECT id FROM users WHERE userid = ?', userid);
+            if (existingUser) {
+                return res.status(400).json({ error: 'User ID already exists' });
+            }
 
             const result = await db.run(
-                `INSERT INTO users (name, leg, added_under_id, mobile_no, address, work, remarks)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [name, leg, added_under_id, mobile_no, address, work, remarks]
+                `INSERT INTO users (name, leg, added_under_id, mobile_no, address, work, remarks, userid, password)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [name, leg, added_under_id, mobile_no, address, work, remarks, userid, password]
             );
 
             if (result.lastID) {
@@ -70,11 +74,28 @@ export default function userRoutes(db: Database) {
     router.put('/:id', async (req, res) => {
         try {
             const user: User = req.body;
+            
+            // If userid is being changed, check if new userid already exists
+            if (user.userid) {
+                const existingUser = await db.get(
+                    'SELECT id FROM users WHERE userid = ? AND id != ?', 
+                    [user.userid, req.params.id]
+                );
+                if (existingUser) {
+                    return res.status(400).json({ error: 'User ID already exists' });
+                }
+            }
+
             await db.run(
                 `UPDATE users 
-                 SET name = ?, leg = ?, added_under_id = ?, mobile_no = ?, address = ?, work = ?, remarks = ?
+                 SET name = ?, leg = ?, added_under_id = ?, mobile_no = ?, 
+                     address = ?, work = ?, remarks = ?, userid = ?, password = ?
                  WHERE id = ?`,
-                [user.name, user.leg, user.added_under_id, user.mobile_no, user.address, user.work, user.remarks, req.params.id]
+                [
+                    user.name, user.leg, user.added_under_id, user.mobile_no,
+                    user.address, user.work, user.remarks, user.userid, user.password,
+                    req.params.id
+                ]
             );
             res.json({ id: parseInt(req.params.id), ...user });
         } catch (error) {
