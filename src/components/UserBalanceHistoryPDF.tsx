@@ -52,11 +52,13 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
+    col15: { width: '15%' },
     col20: { width: '20%' },
     col25: { width: '25%' },
     col30: { width: '30%' },
     col70: { width: '70%' },
     col75: { width: '75%' },
+    col80: { width: '80%' },
     alignRight: { textAlign: 'right' },
     total: {
         flexDirection: 'row',
@@ -113,27 +115,31 @@ const UserBalanceHistoryPDF: React.FC<UserBalanceHistoryPDFProps> = ({ data }) =
                 <Text style={styles.header}>Purchase History</Text>
                 <View style={styles.tableHeader}>
                     <Text style={styles.col20}>Date</Text>
-                    <Text style={styles.col30}>Product</Text>
-                    <Text style={[styles.col25, styles.alignRight]}>SP</Text>
-                    <Text style={[styles.col25, styles.alignRight]}>Amount</Text>
+                    <Text style={styles.col25}>Product</Text>
+                    <Text style={[styles.col15, styles.alignRight]}>Quantity</Text>
+                    <Text style={[styles.col20, styles.alignRight]}>SP</Text>
+                    <Text style={[styles.col20, styles.alignRight]}>Amount</Text>
                 </View>
                 {data.sales.map((sale, index) => (
                     <View key={index} style={styles.tableRow}>
                         <Text style={styles.col20}>
                             {new Date(sale.date).toLocaleDateString()}
                         </Text>
-                        <Text style={styles.col30}>{sale.product_name}</Text>
-                        <Text style={[styles.col25, styles.alignRight]}>
-                            ₹{sale.sp.toFixed(2)}
+                        <Text style={styles.col25}>{sale.product_name}</Text>
+                        <Text style={[styles.col15, styles.alignRight]}>
+                            {sale.quantity}
                         </Text>
-                        <Text style={[styles.col25, styles.alignRight]}>
+                        <Text style={[styles.col20, styles.alignRight]}>
+                            ₹{(sale.sp * sale.quantity).toFixed(2)}
+                        </Text>
+                        <Text style={[styles.col20, styles.alignRight]}>
                             ₹{sale.final_amount.toFixed(2)}
                         </Text>
                     </View>
                 ))}
                 <View style={styles.total}>
-                    <Text style={styles.col75}>Total Purchases:</Text>
-                    <Text style={[styles.col25, styles.alignRight]}>
+                    <Text style={styles.col80}>Total Purchases:</Text>
+                    <Text style={[styles.col20, styles.alignRight]}>
                         ₹{data.summary.totalPurchases.toFixed(2)}
                     </Text>
                 </View>

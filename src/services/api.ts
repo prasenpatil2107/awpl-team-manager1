@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Product, Sale, Payment, ApiResponse, UserDetailsData } from '../types';
+import { User, Product, Sale, Payment, ApiResponse, UserDetailsData, Prescription } from '../types';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -55,4 +55,15 @@ export const paymentApi = {
     update: (id: number, payment: Partial<Payment>) => 
         api.put<ApiResponse<Payment>>(`/payments/${id}`, payment),
     delete: (id: number) => api.delete(`/payments/${id}`),
+};
+
+export const prescriptionApi = {
+    create: (prescription: Prescription) => 
+        api.post<ApiResponse<Prescription>>('/prescriptions', prescription),
+    getByUser: (userId: number) => 
+        api.get<ApiResponse<Prescription[]>>(`/prescriptions/user/${userId}`),
+    update: (id: number, prescription: Prescription) => 
+        api.put<ApiResponse<Prescription>>(`/prescriptions/${id}`, prescription),
+    delete: (id: number) => 
+        api.delete(`/prescriptions/${id}`),
 }; 

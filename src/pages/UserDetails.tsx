@@ -20,8 +20,8 @@ import {
     IconButton,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Download as DownloadIcon } from '@mui/icons-material';
-import { User, Sale, Payment, SaleFormData } from '../types';
-import { userApi, saleApi, paymentApi } from '../services/api';
+import { User, Sale, Payment, SaleFormData, Prescription } from '../types';
+import { userApi, saleApi, paymentApi, prescriptionApi } from '../services/api';
 import TableToolbar from '../components/TableToolbar';
 import TableHeader from '../components/TableHeader';
 import TablePagination from '../components/TablePagination';
@@ -31,6 +31,8 @@ import { exportToExcel } from '../utils/export';
 import UserForm from '../components/UserForm';
 import { PDFDownloadLink, BlobProvider } from '@react-pdf/renderer';
 import UserBalanceHistoryPDF from '../components/UserBalanceHistoryPDF';
+import PrescriptionPDF from '../components/PrescriptionPDF';
+import PrescriptionForm from '../components/PrescriptionForm';
 
 interface UserNode extends User {
     children?: UserNode[];
@@ -61,6 +63,9 @@ const UserDetails: React.FC = () => {
     const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
     const [paymentFormData, setPaymentFormData] = useState<Partial<Payment>>({});
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
+    const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+    const [openPrescriptionDialog, setOpenPrescriptionDialog] = useState(false);
+    const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
 
     const {
         items: filteredSales,
@@ -98,6 +103,7 @@ const UserDetails: React.FC = () => {
         if (id) {
             loadUserDetails(parseInt(id));
             loadUsers();
+            loadPrescriptions();
         }
     }, [id]);
 
@@ -124,6 +130,15 @@ const UserDetails: React.FC = () => {
             setUsers(response.data.data || []);
         } catch (error) {
             console.error('Failed to load users:', error);
+        }
+    };
+
+    const loadPrescriptions = async () => {
+        try {
+            const response = await prescriptionApi.getByUser(parseInt(id!));
+            setPrescriptions(response.data.data || []);
+        } catch (error) {
+            console.error('Failed to load prescriptions:', error);
         }
     };
 
@@ -178,12 +193,14 @@ const UserDetails: React.FC = () => {
     const handleEditSale = (sale: Sale) => {
         setEditingSale(sale);
         setSaleFormData({
+            product_name: sale.product_name,
+            mrp: sale.mrp,
+            dp: sale.dp,
+            sp: sale.sp,
             quantity: sale.quantity,
             sold_rate: sale.sold_rate,
             final_amount: sale.final_amount,
-            sp: sale.sp,
             date: sale.date,
-            product_name: sale.product_name
         });
         setOpenSaleDialog(true);
     };
@@ -271,6 +288,22 @@ const UserDetails: React.FC = () => {
             loadUserDetails(parseInt(id!));
         } catch (error) {
             console.error('Failed to delete payment:', error);
+        }
+    };
+
+    const handleEditPrescription = (prescription: Prescription) => {
+        setSelectedPrescription(prescription);
+        setOpenPrescriptionDialog(true);
+    };
+
+    const handleDeletePrescription = async (prescriptionId: number) => {
+        if (window.confirm('Are you sure you want to delete this prescription?')) {
+            try {
+                await prescriptionApi.delete(prescriptionId);
+                setPrescriptions(prev => prev.filter(p => p.id !== prescriptionId));
+            } catch (error) {
+                console.error('Failed to delete prescription:', error);
+            }
         }
     };
 
@@ -407,7 +440,7 @@ const UserDetails: React.FC = () => {
                                         <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
                                         <TableCell>{sale.product_name}</TableCell>
                                         <TableCell align="right">{sale.quantity}</TableCell>
-                                        <TableCell align="right">₹{sale.sp.toFixed(2)}</TableCell>
+                                        <TableCell align="right">₹{(sale.sp * sale.quantity).toFixed(2)}</TableCell>
                                         <TableCell align="right">₹{sale.final_amount.toFixed(2)}</TableCell>
                                         <TableCell>
                                             <IconButton
@@ -489,6 +522,73 @@ const UserDetails: React.FC = () => {
                         </Table>
                     </TableContainer>
                 </Paper>
+
+                <Grid item xs={12}>
+                    <Paper sx={{ p: 2, mt: 2 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Prescriptions
+                        </Typography>
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Medicines</TableCell>
+                                        <TableCell>Remarks</TableCell>
+                                        <TableCell align="right">Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {prescriptions.map((prescription) => (
+                                        <TableRow key={prescription.id}>
+                                            <TableCell>
+                                                {new Date(prescription.date).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {prescription.medicines.map(m => m.product_name).join(', ')}
+                                            </TableCell>
+                                            <TableCell>{prescription.remarks}</TableCell>
+                                            <TableCell align="right">
+                                                <IconButton
+                                                    onClick={() => handleEditPrescription(prescription)}
+                                                    size="small"
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                                <IconButton
+                                                    onClick={() => prescription.id && handleDeletePrescription(prescription.id)}
+                                                    size="small"
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                                <BlobProvider document={
+                                                    <PrescriptionPDF data={{
+                                                        patientName: userDetails.user.name,
+                                                        patientMobile: userDetails.user.mobile_no || '',
+                                                        patientAddress: userDetails.user.address || '',
+                                                        date: prescription.date,
+                                                        medicines: prescription.medicines,
+                                                        remarks: prescription.remarks
+                                                    }} />
+                                                }>
+                                                    {({ url }) => (
+                                                        <IconButton
+                                                            size="small"
+                                                            href={url || '#'}
+                                                            download={`prescription_${userDetails.user.name}_${prescription.date}.pdf`}
+                                                        >
+                                                            <DownloadIcon />
+                                                        </IconButton>
+                                                    )}
+                                                </BlobProvider>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
+                </Grid>
             </Grid>
 
             <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="md" fullWidth>
@@ -518,6 +618,39 @@ const UserDetails: React.FC = () => {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
+                                    label="MRP"
+                                    value={saleFormData.mrp || ''}
+                                    disabled
+                                    InputProps={{
+                                        startAdornment: <span>₹</span>
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="DP"
+                                    value={saleFormData.dp || ''}
+                                    disabled
+                                    InputProps={{
+                                        startAdornment: <span>₹</span>
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="SP"
+                                    value={saleFormData.sp || ''}
+                                    disabled
+                                    InputProps={{
+                                        startAdornment: <span>₹</span>
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
                                     label="Date"
                                     name="date"
                                     type="date"
@@ -540,17 +673,6 @@ const UserDetails: React.FC = () => {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="SP"
-                                    name="sp"
-                                    type="number"
-                                    value={saleFormData.sp || ''}
-                                    onChange={handleSaleChange}
-                                    inputProps={{ step: "0.01" }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
                                     label="Sold Rate"
                                     name="sold_rate"
                                     type="number"
@@ -563,12 +685,11 @@ const UserDetails: React.FC = () => {
                                 <TextField
                                     fullWidth
                                     label="Final Amount"
-                                    name="final_amount"
-                                    type="number"
                                     value={saleFormData.final_amount || ''}
-                                    onChange={handleSaleChange}
-                                    inputProps={{ step: "0.01" }}
-                                    helperText="You can edit this directly or let it calculate automatically"
+                                    disabled
+                                    InputProps={{
+                                        startAdornment: <span>₹</span>
+                                    }}
                                 />
                             </Grid>
                         </Grid>
@@ -613,6 +734,32 @@ const UserDetails: React.FC = () => {
                             <Button type="submit" variant="contained">Update</Button>
                         </DialogActions>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog 
+                open={openPrescriptionDialog} 
+                onClose={() => setOpenPrescriptionDialog(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>Edit Prescription</DialogTitle>
+                <DialogContent>
+                    {selectedPrescription && (
+                        <PrescriptionForm 
+                            initialData={selectedPrescription}
+                            onSave={async (updatedPrescription: Prescription) => {
+                                try {
+                                    await prescriptionApi.update(selectedPrescription.id!, updatedPrescription);
+                                    const prescriptionsResponse = await prescriptionApi.getByUser(Number(id));
+                                    setPrescriptions(prescriptionsResponse.data.data || []);
+                                    setOpenPrescriptionDialog(false);
+                                } catch (error) {
+                                    console.error('Failed to update prescription:', error);
+                                }
+                            }}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
         </Grid>

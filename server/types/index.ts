@@ -2,7 +2,7 @@ export interface User {
     id?: number;
     name: string;
     leg?: 'Bonus' | 'Incentive' | null;
-    added_under_id?: number | null;
+    added_under_id?: number;
     mobile_no?: string;
     address?: string;
     work?: string;
@@ -16,6 +16,7 @@ export interface Product {
     dp: number;
     sp: number;
     description?: string;
+    link?: string;
 }
 
 export interface Sale {
@@ -36,4 +37,20 @@ export interface Payment {
     user_id: number;
     amount: number;
     date: string;
+}
+
+export interface PrescriptionMedicine {
+    id?: number;
+    prescription_id?: number;
+    product_id: number;
+    morning_dose: string;
+    evening_dose: string;
+}
+
+export interface Prescription {
+    id?: number;
+    user_id: number;
+    date: string;
+    remarks: string;
+    medicines: PrescriptionMedicine[];
 } 

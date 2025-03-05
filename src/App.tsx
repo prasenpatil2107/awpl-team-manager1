@@ -8,6 +8,7 @@ import ProductList from './pages/ProductList';
 import NewSale from './pages/NewSale';
 import PaymentEntry from './pages/PaymentEntry';
 import UnassignedUsers from './pages/UnassignedUsers';
+import Prescription from './pages/Prescription';
 
 const App: React.FC = () => {
     return (
@@ -21,6 +22,7 @@ const App: React.FC = () => {
                     <Route path="/sales/new" element={<NewSale />} />
                     <Route path="/payments" element={<PaymentEntry />} />
                     <Route path="/users/unassigned" element={<UnassignedUsers />} />
+                    <Route path="/prescription" element={<Prescription />} />
                 </Routes>
             </Layout>
         </>

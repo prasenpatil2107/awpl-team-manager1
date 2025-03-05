@@ -79,6 +79,29 @@ export async function initializeDatabase() {
 
         console.log('Payments table created successfully');
 
+        // Prescriptions table
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS prescriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                date DATE NOT NULL,
+                remarks TEXT,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        `);
+
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS prescription_medicines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prescription_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                morning_dose TEXT,
+                evening_dose TEXT,
+                FOREIGN KEY (prescription_id) REFERENCES prescriptions(id),
+                FOREIGN KEY (product_id) REFERENCES products(id)
+            )
+        `);
+
         return db;
     } catch (error) {
         console.error('Database initialization error:', error);

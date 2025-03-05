@@ -59,4 +59,21 @@ export interface UserDetailsData {
         balanceAmount: number;
         totalSP: number;
     };
+}
+
+export interface PrescriptionMedicine {
+    id?: number;
+    prescription_id?: number;
+    product_id: number;
+    product_name?: string;
+    morning_dose: string;
+    evening_dose: string;
+}
+
+export interface Prescription {
+    id?: number;
+    user_id: number;
+    date: string;
+    remarks: string;
+    medicines: PrescriptionMedicine[];
 } 

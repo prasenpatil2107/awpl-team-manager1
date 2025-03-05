@@ -5,6 +5,7 @@ import userRoutes from './routes/userRoutes';
 import productRoutes from './routes/productRoutes';
 import salesRoutes from './routes/salesRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import prescriptionRoutes from './routes/prescriptionRoutes';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -55,6 +56,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
         app.use('/api/products', productRoutes(db));
         app.use('/api/sales', salesRoutes(db));
         app.use('/api/payments', paymentRoutes(db));
+        app.use('/api/prescriptions', prescriptionRoutes(db));
 
         app.listen(port, () => {
             console.log(`Server is running on port ${port}`);
