@@ -25,6 +25,7 @@ import {
     ChevronLeft as ChevronLeftIcon,
     ChevronRight as ChevronRightIcon,
     LocalHospital as LocalHospitalIcon,
+    AccountTree as AccountTreeIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -40,6 +41,7 @@ const menuItems = [
     { title: 'Payment Entry', path: '/payments', icon: <PaymentIcon /> },
     { title: 'Unassigned Users', path: '/users/unassigned', icon: <PersonIcon /> },
     { title: 'Prescription', path: '/prescription', icon: <LocalHospitalIcon /> },
+    { title: 'Tree View', path: '/tree', icon: <AccountTreeIcon /> },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {

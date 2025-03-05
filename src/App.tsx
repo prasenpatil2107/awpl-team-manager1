@@ -9,6 +9,7 @@ import NewSale from './pages/NewSale';
 import PaymentEntry from './pages/PaymentEntry';
 import UnassignedUsers from './pages/UnassignedUsers';
 import Prescription from './pages/Prescription';
+import Tree from './pages/Tree';
 
 const App: React.FC = () => {
     return (
@@ -23,6 +24,7 @@ const App: React.FC = () => {
                     <Route path="/payments" element={<PaymentEntry />} />
                     <Route path="/users/unassigned" element={<UnassignedUsers />} />
                     <Route path="/prescription" element={<Prescription />} />
+                    <Route path="/tree" element={<Tree />} />
                 </Routes>
             </Layout>
         </>

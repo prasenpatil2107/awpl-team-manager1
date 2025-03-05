@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { User } from '../types';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { userApi } from '../services/api';
 
 interface UserFormProps {
   user: Partial<User>;
@@ -22,14 +23,34 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
   const [formData, setFormData] = React.useState<Partial<User>>(user);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (formData.added_under_id && formData.leg) {
+        const isLegAvailable = await checkLegAvailability(formData.added_under_id, formData.leg);
+        if (!isLegAvailable) {
+            alert(`${formData.leg === 'Bonus' ? 'Right' : 'Left'} leg is already occupied`);
+            return;
+        }
+    }
+    
     onSubmit(formData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const checkLegAvailability = async (userId: number, leg: string) => {
+    try {
+        const response = await userApi.getDownline(userId);
+        const downlineUsers = response.data.data || [];
+        return !downlineUsers.some(u => u.leg === leg);
+    } catch (error) {
+        console.error('Failed to check leg availability:', error);
+        return false;
+    }
   };
 
   return (
@@ -55,8 +76,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             onChange={handleChange}
           >
             <MenuItem value="">None</MenuItem>
-            <MenuItem value="Bonus">Bonus</MenuItem>
-            <MenuItem value="Incentive">Incentive</MenuItem>
+            <MenuItem value="Bonus">S.A.O. (Bonus - Right Leg)</MenuItem>
+            <MenuItem value="Incentive">S.G.O. (Incentive - Left Leg)</MenuItem>
           </TextField>
         </Grid>
         <Grid item xs={12}>
