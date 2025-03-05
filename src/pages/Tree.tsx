@@ -15,6 +15,11 @@ interface TreeNode extends User {
     leftLeg?: TreeNode;
 }
 
+// Add a new interface for expanded nodes tracking
+interface ExpandedNodes {
+    [key: number]: boolean;
+}
+
 const TreeContainer = styled('ul')({
     listStyle: 'none',
     margin: '0 0 1em',
@@ -80,9 +85,14 @@ const NodeBox = styled(Paper)(({ theme }) => ({
         position: 'absolute',
         top: '-0.55em',
     },
+    cursor: 'pointer',
     '&.empty': {
         backgroundColor: theme.palette.grey[100],
         border: `1px dashed ${theme.palette.grey[400]}`,
+        cursor: 'not-allowed',
+    },
+    '&:hover:not(.empty)': {
+        backgroundColor: theme.palette.action.hover,
     },
 }));
 
@@ -90,6 +100,7 @@ const Tree: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<string>('');
     const [treeData, setTreeData] = useState<TreeNode | null>(null);
+    const [expandedNodes, setExpandedNodes] = useState<ExpandedNodes>({});
 
     useEffect(() => {
         loadUsers();
@@ -156,8 +167,81 @@ const Tree: React.FC = () => {
         return buildSubTree(user as TreeNode);
     };
 
+    const toggleNode = async (nodeId: number) => {
+        if (!nodeId) return;
+
+        setExpandedNodes(prev => {
+            const newExpanded = { ...prev };
+            if (newExpanded[nodeId]) {
+                // Collapse this node and all its children
+                const collapseChildren = (node: TreeNode) => {
+                    if (!node) return;
+                    delete newExpanded[node.id!];
+                    if (node.rightLeg) collapseChildren(node.rightLeg);
+                    if (node.leftLeg) collapseChildren(node.leftLeg);
+                };
+
+                const node = findNodeById(treeData!, nodeId);
+                if (node) collapseChildren(node);
+            } else {
+                // Expand just this node
+                newExpanded[nodeId] = true;
+                // Load its children if needed
+                loadNodeChildren(nodeId);
+            }
+            return newExpanded;
+        });
+    };
+
+    const findNodeById = (tree: TreeNode, id: number): TreeNode | null => {
+        if (tree.id === id) return tree;
+        if (tree.rightLeg) {
+            const found = findNodeById(tree.rightLeg, id);
+            if (found) return found;
+        }
+        if (tree.leftLeg) {
+            const found = findNodeById(tree.leftLeg, id);
+            if (found) return found;
+        }
+        return null;
+    };
+
+    const loadNodeChildren = async (nodeId: number) => {
+        try {
+            const response = await userApi.getDownline(nodeId);
+            const children = response.data.data || [];
+
+            setTreeData(prevTree => {
+                if (!prevTree) return null;
+                
+                const updateNode = (node: TreeNode): TreeNode => {
+                    if (node.id === nodeId) {
+                        return {
+                            ...node,
+                            rightLeg: children.find(c => c.leg === 'Bonus'),
+                            leftLeg: children.find(c => c.leg === 'Incentive')
+                        };
+                    }
+                    return {
+                        ...node,
+                        rightLeg: node.rightLeg ? updateNode(node.rightLeg) : undefined,
+                        leftLeg: node.leftLeg ? updateNode(node.leftLeg) : undefined
+                    };
+                };
+
+                return updateNode(prevTree);
+            });
+        } catch (error) {
+            console.error('Failed to load children:', error);
+        }
+    };
+
     const renderNode = (node?: TreeNode) => (
-        <NodeBox elevation={1} className={!node ? 'empty' : ''}>
+        <NodeBox 
+            elevation={1} 
+            className={!node ? 'empty' : ''} 
+            onClick={() => node && toggleNode(node.id!)}
+        >
             {node ? (
                 <>
                     <Typography variant="subtitle2" fontWeight="bold">
@@ -181,14 +265,16 @@ const Tree: React.FC = () => {
         <TreeContainer>
             <TreeItem>
                 {renderNode(node)}
-                <TreeBranch>
-                    <TreeItem>
-                        {node.rightLeg ? renderTree(node.rightLeg) : renderNode()}
-                    </TreeItem>
-                    <TreeItem>
-                        {node.leftLeg ? renderTree(node.leftLeg) : renderNode()}
-                    </TreeItem>
-                </TreeBranch>
+                {expandedNodes[node.id!] && (
+                    <TreeBranch>
+                        <TreeItem>
+                            {node.rightLeg ? renderTree(node.rightLeg) : renderNode()}
+                        </TreeItem>
+                        <TreeItem>
+                            {node.leftLeg ? renderTree(node.leftLeg) : renderNode()}
+                        </TreeItem>
+                    </TreeBranch>
+                )}
             </TreeItem>
         </TreeContainer>
     );
