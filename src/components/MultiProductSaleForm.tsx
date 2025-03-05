@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { Product, Sale } from '../types';
+import SearchableSelect from './SearchableSelect';
 
 interface ProductRow {
     product_id?: number;
@@ -55,13 +56,13 @@ const MultiProductSaleForm: React.FC<MultiProductSaleFormProps> = ({
                 const newRows = [...prev];
                 newRows[index] = {
                     ...newRows[index],
-                    product_id: productId,
+                    product_id: product.id,
                     product_name: product.product_name,
                     mrp: product.mrp,
                     dp: product.dp,
                     sp: product.sp,
                     sold_rate: product.sp,
-                    final_amount: product.sp * newRows[index].quantity
+                    final_amount: product.sp * newRows[index].quantity,
                 };
                 return newRows;
             });
@@ -74,9 +75,11 @@ const MultiProductSaleForm: React.FC<MultiProductSaleFormProps> = ({
             newRows[index] = {
                 ...newRows[index],
                 [field]: value,
-                final_amount: field === 'quantity' || field === 'sold_rate' 
-                    ? value * (field === 'quantity' ? newRows[index].sold_rate : newRows[index].quantity)
-                    : newRows[index].final_amount
+                final_amount: field === 'quantity' ? 
+                    newRows[index].sold_rate * value :
+                    field === 'sold_rate' ? 
+                        value * newRows[index].quantity :
+                        newRows[index].final_amount,
             };
             return newRows;
         });
@@ -116,6 +119,11 @@ const MultiProductSaleForm: React.FC<MultiProductSaleFormProps> = ({
     const totalAmount = productRows.reduce((sum, row) => sum + row.final_amount, 0);
     const totalSP = productRows.reduce((sum, row) => sum + row.sp * row.quantity, 0);
 
+    const productOptions = products.map(product => ({
+        id: product.id!,
+        label: product.product_name
+    }));
+
     return (
         <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
@@ -150,19 +158,12 @@ const MultiProductSaleForm: React.FC<MultiProductSaleFormProps> = ({
                         {productRows.map((row, index) => (
                             <TableRow key={index}>
                                 <TableCell>
-                                    <TextField
-                                        required
-                                        select
-                                        fullWidth
+                                    <SearchableSelect
+                                        label="Select Product"
+                                        options={productOptions}
                                         value={row.product_id || ''}
-                                        onChange={(e) => handleProductChange(index, Number(e.target.value))}
-                                    >
-                                        {products.map((product) => (
-                                            <MenuItem key={product.id} value={product.id}>
-                                                {product.product_name}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
+                                        onChange={(value) => handleProductChange(index, Number(value))}
+                                    />
                                 </TableCell>
                                 <TableCell align="right">₹{row.mrp.toFixed(2)}</TableCell>
                                 <TableCell align="right">₹{row.dp.toFixed(2)}</TableCell>

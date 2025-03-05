@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { User } from '../types';
 import { userApi, paymentApi } from '../services/api';
+import SearchableSelect from '../components/SearchableSelect';
 
 interface UserBalance {
     totalSales: number;
@@ -86,6 +87,11 @@ const PaymentEntry: React.FC = () => {
         }
     };
 
+    const userOptions = users.map(user => ({
+        id: user.id!,
+        label: user.name
+    }));
+
     return (
         <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
@@ -101,21 +107,12 @@ const PaymentEntry: React.FC = () => {
             <form onSubmit={handleSubmit}>
                 <Grid container spacing={3}>
                     <Grid item xs={12}>
-                        <TextField
-                            required
-                            select
-                            fullWidth
-                            label="User"
-                            value={selectedUser}
-                            onChange={(e) => handleUserChange(Number(e.target.value))}
-                        >
-                            <MenuItem value="">Select User</MenuItem>
-                            {users.map((user) => (
-                                <MenuItem key={user.id} value={user.id}>
-                                    {user.name}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                        <SearchableSelect
+                            label="Select User"
+                            options={userOptions}
+                            value={selectedUser || ''}
+                            onChange={(value) => handleUserChange(Number(value))}
+                        />
                     </Grid>
 
                     {userBalance && (

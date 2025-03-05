@@ -21,6 +21,7 @@ import { userApi, productApi, prescriptionApi } from '../services/api';
 import { BlobProvider } from '@react-pdf/renderer';
 import PrescriptionPDF from '../components/PrescriptionPDF';
 import { Prescription as PrescriptionType } from '../types';
+import SearchableSelect from '../components/SearchableSelect';
 
 interface MedicineRow {
     product_id?: number;
@@ -129,6 +130,16 @@ const Prescription: React.FC = () => {
         }
     };
 
+    const userOptions = users.map(user => ({
+        id: user.id!,
+        label: user.name
+    }));
+
+    const productOptions = products.map(product => ({
+        id: product.id!,
+        label: product.product_name
+    }));
+
     return (
         <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -137,20 +148,12 @@ const Prescription: React.FC = () => {
 
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
-                    <TextField
-                        required
-                        fullWidth
-                        select
-                        label="Patient"
-                        value={selectedUserId}
-                        onChange={(e) => setSelectedUserId(Number(e.target.value))}
-                    >
-                        {users.map((user) => (
-                            <MenuItem key={user.id} value={user.id}>
-                                {user.name}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                    <SearchableSelect
+                        label="Select User"
+                        options={userOptions}
+                        value={selectedUserId || ''}
+                        onChange={(value) => setSelectedUserId(value)}
+                    />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                     <TextField
@@ -179,19 +182,17 @@ const Prescription: React.FC = () => {
                         {medicines.map((row, index) => (
                             <TableRow key={index}>
                                 <TableCell>
-                                    <TextField
-                                        required
-                                        select
-                                        fullWidth
+                                    <SearchableSelect
+                                        label="Select Medicine"
+                                        options={productOptions}
                                         value={row.product_id || ''}
-                                        onChange={(e) => handleProductChange(index, Number(e.target.value))}
-                                    >
-                                        {products.map((product) => (
-                                            <MenuItem key={product.id} value={product.id}>
-                                                {product.product_name}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
+                                        onChange={(value) => {
+                                            const product = products.find(p => p.id === value);
+                                            if (product) {
+                                                handleProductChange(index, product.id!);
+                                            }
+                                        }}
+                                    />
                                 </TableCell>
                                 <TableCell>
                                     <TextField

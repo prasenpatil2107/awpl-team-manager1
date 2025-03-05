@@ -11,6 +11,7 @@ import {
 import { User } from '../types';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { userApi } from '../services/api';
+import SearchableSelect from './SearchableSelect';
 
 interface UserFormProps {
   user: Partial<User>;
@@ -53,6 +54,11 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
     }
   };
 
+  const userOptions = users.map(user => ({
+    id: user.id!,
+    label: user.name
+  }));
+
   return (
     <form onSubmit={handleSubmit}>
       <Grid container spacing={2}>
@@ -81,21 +87,14 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
           </TextField>
         </Grid>
         <Grid item xs={12}>
-          <TextField
-            select
-            fullWidth
+          <SearchableSelect
             label="Added Under"
-            name="added_under_id"
+            options={userOptions}
             value={formData.added_under_id || ''}
-            onChange={handleChange}
-          >
-            <MenuItem value="">None</MenuItem>
-            {users.map((u) => (
-              <MenuItem key={u.id} value={u.id}>
-                {u.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={(value) => handleChange({
+              target: { name: 'added_under_id', value }
+            } as React.ChangeEvent<HTMLInputElement>)}
+          />
         </Grid>
         <Grid item xs={12}>
           <TextField

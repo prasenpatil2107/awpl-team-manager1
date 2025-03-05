@@ -10,6 +10,7 @@ import {
 import { User, Product, Sale } from '../types';
 import { userApi, productApi, saleApi } from '../services/api';
 import MultiProductSaleForm from '../components/MultiProductSaleForm';
+import SearchableSelect from '../components/SearchableSelect';
 
 const NewSale: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -58,6 +59,17 @@ const NewSale: React.FC = () => {
         }
     };
 
+    // Inside the component, add these option mappings
+    const userOptions = users.map(user => ({
+        id: user.id!,
+        label: user.name
+    }));
+
+    const productOptions = products.map(product => ({
+        id: product.id!,
+        label: product.product_name
+    }));
+
     if (loading) return <Typography>Loading...</Typography>;
     if (error) return <Typography color="error">{error}</Typography>;
 
@@ -69,20 +81,12 @@ const NewSale: React.FC = () => {
 
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
-                    <TextField
-                        required
-                        fullWidth
-                        select
-                        label="User"
+                    <SearchableSelect
+                        label="Select User"
+                        options={userOptions}
                         value={selectedUserId}
-                        onChange={(e) => setSelectedUserId(Number(e.target.value))}
-                    >
-                        {users.map((user) => (
-                            <MenuItem key={user.id} value={user.id}>
-                                {user.name}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                        onChange={(value) => setSelectedUserId(Number(value))}
+                    />
                 </Grid>
             </Grid>
 

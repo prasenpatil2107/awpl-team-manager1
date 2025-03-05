@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { User } from '../types';
 import { userApi } from '../services/api';
+import SearchableSelect from '../components/SearchableSelect';
 
 interface TreeNode extends User {
     rightLeg?: TreeNode;
@@ -98,7 +99,7 @@ const NodeBox = styled(Paper)(({ theme }) => ({
 
 const Tree: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
-    const [selectedUserId, setSelectedUserId] = useState<string>('');
+    const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
     const [treeData, setTreeData] = useState<TreeNode | null>(null);
     const [expandedNodes, setExpandedNodes] = useState<ExpandedNodes>({});
 
@@ -107,8 +108,8 @@ const Tree: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (selectedUserId) {
-            buildTree(selectedUserId);
+        if (selectedUserId !== '') {
+            buildTree(selectedUserId.toString());
         }
     }, [selectedUserId]);
 
@@ -279,22 +280,20 @@ const Tree: React.FC = () => {
         </TreeContainer>
     );
 
+    const userOptions = users.map(user => ({
+        id: user.id!,
+        label: user.name
+    }));
+
     return (
         <Paper sx={{ p: 3 }}>
             <Box sx={{ mb: 3 }}>
-                <TextField
-                    select
-                    fullWidth
+                <SearchableSelect
                     label="Select User"
+                    options={userOptions}
                     value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                >
-                    {users.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                            {user.name}
-                        </MenuItem>
-                    ))}
-                </TextField>
+                    onChange={(value) => setSelectedUserId(value)}
+                />
             </Box>
 
             {treeData && (

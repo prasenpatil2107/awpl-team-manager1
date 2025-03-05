@@ -15,6 +15,7 @@ import {
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { Product, Prescription } from '../types';
 import { productApi } from '../services/api';
+import SearchableSelect from './SearchableSelect';
 
 interface PrescriptionFormProps {
     initialData: Prescription;
@@ -105,6 +106,11 @@ const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ initialData, onSave
         });
     };
 
+    const productOptions = products.map(product => ({
+        id: product.id!,
+        label: product.product_name
+    }));
+
     return (
         <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
@@ -134,18 +140,12 @@ const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ initialData, onSave
                         {medicines.map((row, index) => (
                             <TableRow key={index}>
                                 <TableCell>
-                                    <TextField
-                                        select
-                                        fullWidth
+                                    <SearchableSelect
+                                        label="Product"
+                                        options={productOptions}
                                         value={row.product_id || ''}
-                                        onChange={(e) => handleProductChange(index, Number(e.target.value))}
-                                    >
-                                        {products.map((product) => (
-                                            <MenuItem key={product.id} value={product.id}>
-                                                {product.product_name}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
+                                        onChange={(value) => handleProductChange(index, Number(value))}
+                                    />
                                 </TableCell>
                                 <TableCell>
                                     <TextField
