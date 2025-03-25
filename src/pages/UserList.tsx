@@ -28,6 +28,8 @@ import ErrorMessage from '../components/ErrorMessage';
 import ExportButton from '../components/ExportButton';
 import { exportToExcel, importFromExcel, validateUserImport } from '../utils/importExport';
 import TablePagination from '../components/TablePagination';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import UserListPDF from '../components/UserListPDF';
 
 const UserList: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -138,6 +140,18 @@ const UserList: React.FC = () => {
         event.target.value = '';
     };
 
+    const exportButtons = (
+        <Button
+            variant="contained"
+            startIcon={<FileDownloadIcon />}
+            component={PDFDownloadLink}
+            document={<UserListPDF users={users} />}
+            fileName="user-list.pdf"
+        >
+            Export PDF
+        </Button>
+    );
+
     if (loading) return <LoadingSpinner />;
     if (error) return <ErrorMessage error={error} />;
 
@@ -146,13 +160,7 @@ const UserList: React.FC = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h5">Users</Typography>
                 <Stack direction="row" spacing={2}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<FileDownloadIcon />}
-                        onClick={handleExport}
-                    >
-                        Export
-                    </Button>
+                    {exportButtons}
                     <Button
                         variant="outlined"
                         component="label"

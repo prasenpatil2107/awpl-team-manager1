@@ -143,6 +143,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             name="userid"
             value={formData.userid || ''}
             onChange={handleChange}
+            disabled={isEdit}
           />
         </Grid>
         <Grid item xs={12}>
