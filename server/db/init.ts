@@ -130,6 +130,14 @@ export async function initializeDatabase() {
             )
         `);
 
+        // Modify the users table to add sp_value and is_green fields
+        await db.exec(`
+            ALTER TABLE users 
+            ADD COLUMN sp_value DECIMAL(10,2) DEFAULT 0;
+            ALTER TABLE users 
+            ADD COLUMN is_green BOOLEAN DEFAULT 0;
+        `);
+
         return db;
     } catch (error) {
         console.error('Database initialization error:', error);

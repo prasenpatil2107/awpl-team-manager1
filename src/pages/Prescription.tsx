@@ -151,7 +151,7 @@ const Prescription: React.FC = () => {
                     <SearchableSelect
                         label="Select User"
                         options={userOptions}
-                        value={selectedUserId || ''}
+                        value={selectedUserId}
                         onChange={(value) => setSelectedUserId(value)}
                     />
                 </Grid>

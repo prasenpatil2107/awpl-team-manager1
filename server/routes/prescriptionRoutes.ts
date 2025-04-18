@@ -1,6 +1,6 @@
 import express from 'express';
 import { Database } from 'sqlite';
-import { Prescription } from '../types';
+import { Prescription, PrescriptionMedicine, PrescriptionWithMedicines } from '../types';
 
 const router = express.Router();
 
@@ -61,7 +61,7 @@ export default function prescriptionRoutes(db: Database) {
     // Create prescription
     router.post('/', async (req, res) => {
         try {
-            const prescription: Prescription = req.body;
+            const prescription: PrescriptionWithMedicines = req.body;
             
             const result = await db.run(
                 `INSERT INTO prescriptions (user_id, date, remarks)
@@ -71,13 +71,16 @@ export default function prescriptionRoutes(db: Database) {
 
             const prescriptionId = result.lastID;
 
-            for (const medicine of prescription.medicines) {
-                await db.run(
-                    `INSERT INTO prescription_medicines 
-                     (prescription_id, product_id, morning_dose, evening_dose)
-                     VALUES (?, ?, ?, ?)`,
-                    [prescriptionId, medicine.product_id, medicine.morning_dose, medicine.evening_dose]
-                );
+            // Check if medicines exist before iterating
+            if (prescription.medicines && prescription.medicines.length > 0) {
+                for (const medicine of prescription.medicines) {
+                    await db.run(
+                        `INSERT INTO prescription_medicines 
+                         (prescription_id, product_id, morning_dose, evening_dose)
+                         VALUES (?, ?, ?, ?)`,
+                        [prescriptionId, medicine.product_id, medicine.morning_dose, medicine.evening_dose]
+                    );
+                }
             }
 
             res.status(201).json({ id: prescriptionId, ...prescription });
@@ -90,7 +93,7 @@ export default function prescriptionRoutes(db: Database) {
     // Update prescription
     router.put('/:id', async (req, res) => {
         try {
-            const prescription: Prescription = req.body;
+            const prescription: PrescriptionWithMedicines = req.body;
             
             await db.run(
                 `UPDATE prescriptions 
@@ -105,14 +108,16 @@ export default function prescriptionRoutes(db: Database) {
                 req.params.id
             );
 
-            // Insert updated medicines
-            for (const medicine of prescription.medicines) {
-                await db.run(
-                    `INSERT INTO prescription_medicines 
-                     (prescription_id, product_id, morning_dose, evening_dose)
-                     VALUES (?, ?, ?, ?)`,
-                    [req.params.id, medicine.product_id, medicine.morning_dose, medicine.evening_dose]
-                );
+            // Check if medicines exist before iterating
+            if (prescription.medicines && prescription.medicines.length > 0) {
+                for (const medicine of prescription.medicines) {
+                    await db.run(
+                        `INSERT INTO prescription_medicines 
+                         (prescription_id, product_id, morning_dose, evening_dose)
+                         VALUES (?, ?, ?, ?)`,
+                        [req.params.id, medicine.product_id, medicine.morning_dose, medicine.evening_dose]
+                    );
+                }
             }
 
             res.json({ id: parseInt(req.params.id), ...prescription });

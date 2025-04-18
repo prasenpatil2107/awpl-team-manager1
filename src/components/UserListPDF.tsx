@@ -56,7 +56,13 @@ const styles = StyleSheet.create({
     },
     passwordCell: {
         flex: 1.5,
-    }
+    },
+    greenRow: {
+        backgroundColor: '#e8f5e9',
+    } as const,
+    spCell: {
+        flex: 1,
+    },
 });
 
 interface UserListPDFProps {
@@ -92,11 +98,20 @@ const UserListPDF: React.FC<UserListPDFProps> = ({ users }) => (
                     <View style={[styles.cell, styles.passwordCell]}>
                         <Text>Password</Text>
                     </View>
+                    <View style={[styles.cell, styles.spCell]}>
+                        <Text>SP Value</Text>
+                    </View>
                 </View>
 
                 {/* Table Body */}
                 {users.map((user, index) => (
-                    <View key={index} style={styles.tableRow}>
+                    <View 
+                        key={index} 
+                        style={[
+                            styles.tableRow,
+                            user.is_green ? styles.greenRow : {}
+                        ]}
+                    >
                         <View style={[styles.cell, styles.nameCell]}>
                             <Text>{user.name}</Text>
                         </View>
@@ -117,6 +132,9 @@ const UserListPDF: React.FC<UserListPDFProps> = ({ users }) => (
                         </View>
                         <View style={[styles.cell, styles.passwordCell]}>
                             <Text>{user.password || '-'}</Text>
+                        </View>
+                        <View style={[styles.cell, styles.spCell]}>
+                            <Text>{user.sp_value || '0'}</Text>
                         </View>
                     </View>
                 ))}

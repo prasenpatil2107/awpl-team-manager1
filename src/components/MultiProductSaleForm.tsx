@@ -162,7 +162,7 @@ const MultiProductSaleForm: React.FC<MultiProductSaleFormProps> = ({
                                         label="Select Product"
                                         options={productOptions}
                                         value={row.product_id || ''}
-                                        onChange={(value) => handleProductChange(index, Number(value))}
+                                        onChange={(value) => handleProductChange(index, value || 0)}
                                     />
                                 </TableCell>
                                 <TableCell align="right">₹{row.mrp.toFixed(2)}</TableCell>

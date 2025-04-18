@@ -50,10 +50,10 @@ const PaymentEntry: React.FC = () => {
         }
     };
 
-    const handleUserChange = (userId: number) => {
-        setSelectedUser(userId);
-        if (userId) {
-            loadUserBalance(userId);
+    const handleUserChange = (value: number | '') => {
+        setSelectedUser(value);
+        if (value) {
+            loadUserBalance(Number(value));
         } else {
             setUserBalance(null);
         }
@@ -76,7 +76,7 @@ const PaymentEntry: React.FC = () => {
             setSuccessMessage('Payment recorded successfully');
             
             // Reload user balance
-            loadUserBalance(selectedUser);
+            loadUserBalance(Number(selectedUser));
 
             // Clear success message after 3 seconds
             setTimeout(() => {
@@ -110,8 +110,8 @@ const PaymentEntry: React.FC = () => {
                         <SearchableSelect
                             label="Select User"
                             options={userOptions}
-                            value={selectedUser || ''}
-                            onChange={(value) => handleUserChange(Number(value))}
+                            value={selectedUser}
+                            onChange={handleUserChange}
                         />
                     </Grid>
 

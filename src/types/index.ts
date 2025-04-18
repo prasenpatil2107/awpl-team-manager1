@@ -9,6 +9,8 @@ export interface User {
     remarks?: string;
     userid?: string;
     password?: string;
+    sp_value?: number;
+    is_green?: boolean;
 }
 
 export interface Product {

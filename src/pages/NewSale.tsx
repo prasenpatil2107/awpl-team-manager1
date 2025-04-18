@@ -85,7 +85,7 @@ const NewSale: React.FC = () => {
                         label="Select User"
                         options={userOptions}
                         value={selectedUserId}
-                        onChange={(value) => setSelectedUserId(Number(value))}
+                        onChange={(value) => setSelectedUserId(value)}
                     />
                 </Grid>
             </Grid>

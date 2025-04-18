@@ -7,6 +7,8 @@ import {
   Box,
   InputAdornment,
   IconButton,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import { User } from '../types';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -16,26 +18,78 @@ import SearchableSelect from './SearchableSelect';
 interface UserFormProps {
   user: Partial<User>;
   users: User[];
-  onSubmit: (user: Partial<User>) => void;
+  onSubmit: (data: Partial<User>) => void;
   isEdit?: boolean;
 }
 
+interface UserFormData {
+  name: string;
+  leg: string;  // This allows for empty string in the form
+  added_under_id: number;
+  mobile_no: string;
+  address: string;
+  work: string;
+  remarks: string;
+  userid: string;
+  password: string;
+  sp_value: number;
+  is_green: boolean;
+}
+
 const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = false }) => {
-  const [formData, setFormData] = React.useState<Partial<User>>(user);
+  const [formData, setFormData] = React.useState<UserFormData>({
+    name: user.name || '',
+    leg: user.leg || '',
+    added_under_id: user.added_under_id || 0,
+    mobile_no: user.mobile_no || '',
+    address: user.address || '',
+    work: user.work || '',
+    remarks: user.remarks || '',
+    userid: user.userid || '',
+    password: user.password || '',
+    sp_value: user.sp_value || 0,
+    is_green: user.is_green || false,
+  });
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.added_under_id && formData.leg) {
-        const isLegAvailable = await checkLegAvailability(formData.added_under_id, formData.leg);
-        if (!isLegAvailable) {
-            alert(`${formData.leg === 'Bonus' ? 'Right' : 'Left'} leg is already occupied`);
-            return;
+      try {
+        const response = await userApi.getDownline(formData.added_under_id);
+        const downlineUsers = response.data.data || [];
+        
+        const isLegOccupied = downlineUsers.some(downlineUser => 
+          downlineUser.leg === formData.leg && downlineUser.id !== user.id
+        );
+
+        if (isLegOccupied) {
+          alert(`${formData.leg === 'Bonus' ? 'Right' : 'Left'} leg is already occupied`);
+          return;
         }
+      } catch (error) {
+        console.error('Error checking leg availability:', error);
+        alert('Error checking leg availability');
+        return;
+      }
     }
-    
-    onSubmit(formData);
+
+    const userData: Partial<User> = {
+      ...formData,
+      leg: formData.leg === '' ? null : formData.leg as 'Bonus' | 'Incentive',
+      added_under_id: formData.added_under_id || undefined,
+      mobile_no: formData.mobile_no || undefined,
+      address: formData.address || undefined,
+      work: formData.work || undefined,
+      remarks: formData.remarks || undefined,
+      userid: formData.userid || undefined,
+      password: formData.password || undefined,
+      sp_value: formData.sp_value,
+      is_green: formData.is_green
+    };
+
+    onSubmit(userData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,21 +97,17 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const checkLegAvailability = async (userId: number, leg: string) => {
-    try {
-        const response = await userApi.getDownline(userId);
-        const downlineUsers = response.data.data || [];
-        return !downlineUsers.some(u => u.leg === leg);
-    } catch (error) {
-        console.error('Failed to check leg availability:', error);
-        return false;
-    }
-  };
-
   const userOptions = users.map(user => ({
     id: user.id!,
     label: user.name
   }));
+
+  const handleAddedUnderChange = (value: number | '') => {
+    setFormData(prev => ({
+      ...prev,
+      added_under_id: value || 0
+    }));
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -68,7 +118,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="Name"
             name="name"
-            value={formData.name || ''}
+            value={formData.name}
             onChange={handleChange}
           />
         </Grid>
@@ -78,7 +128,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="Leg"
             name="leg"
-            value={formData.leg || ''}
+            value={formData.leg}
             onChange={handleChange}
           >
             <MenuItem value="">None</MenuItem>
@@ -91,9 +141,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             label="Added Under"
             options={userOptions}
             value={formData.added_under_id || ''}
-            onChange={(value) => handleChange({
-              target: { name: 'added_under_id', value }
-            } as React.ChangeEvent<HTMLInputElement>)}
+            onChange={handleAddedUnderChange}
           />
         </Grid>
         <Grid item xs={12}>
@@ -101,7 +149,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="Mobile No"
             name="mobile_no"
-            value={formData.mobile_no || ''}
+            value={formData.mobile_no}
             onChange={handleChange}
           />
         </Grid>
@@ -110,7 +158,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="Address"
             name="address"
-            value={formData.address || ''}
+            value={formData.address}
             onChange={handleChange}
             multiline
             rows={2}
@@ -121,7 +169,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="Work"
             name="work"
-            value={formData.work || ''}
+            value={formData.work}
             onChange={handleChange}
           />
         </Grid>
@@ -130,7 +178,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="Remarks"
             name="remarks"
-            value={formData.remarks || ''}
+            value={formData.remarks}
             onChange={handleChange}
             multiline
             rows={3}
@@ -141,7 +189,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             fullWidth
             label="User ID"
             name="userid"
-            value={formData.userid || ''}
+            value={formData.userid}
             onChange={handleChange}
             disabled={isEdit}
           />
@@ -152,7 +200,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
             label="Password"
             name="password"
             type={showPassword ? 'text' : 'password'}
-            value={formData.password || ''}
+            value={formData.password}
             onChange={handleChange}
             InputProps={{
               endAdornment: (
@@ -167,6 +215,28 @@ const UserForm: React.FC<UserFormProps> = ({ user, users, onSubmit, isEdit = fal
                 </InputAdornment>
               ),
             }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="SP Value"
+            type="number"
+            value={formData.sp_value}
+            onChange={(e) => setFormData({ ...formData, sp_value: parseFloat(e.target.value) || 0 })}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.is_green}
+                onChange={(e) => setFormData({ ...formData, is_green: e.target.checked })}
+                color="primary"
+              />
+            }
+            label="Green Status"
           />
         </Grid>
         <Grid item xs={12}>

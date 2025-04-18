@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     TextField,
     Autocomplete,
@@ -10,14 +10,13 @@ import {
 interface Option {
     id: number;
     label: string;
-    [key: string]: any;
 }
 
 interface SearchableSelectProps {
+    label: string;
     options: Option[];
     value: number | '';
     onChange: (value: number | '') => void;
-    label: string;
     placeholder?: string;
     error?: boolean;
     helperText?: string;

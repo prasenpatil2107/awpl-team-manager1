@@ -34,6 +34,7 @@ export default function userRoutes(db: Database) {
                 'SELECT * FROM users WHERE added_under_id = ?',
                 req.params.id
             );
+            console.log('downline', downline);
             res.json({ data: downline });
         } catch (error) {
             console.error('Error getting downline:', error);
@@ -43,8 +44,9 @@ export default function userRoutes(db: Database) {
 
     // Create new user
     router.post('/', async (req, res) => {
+        console.log('Creating new userpppp:', req.body);
         try {
-            const { name, leg, added_under_id, mobile_no, address, work, remarks, userid, password } = req.body;
+            const { name, leg, added_under_id, mobile_no, address, work, remarks, userid, password, sp_value, is_green } = req.body;
             
             // Check if userid already exists
             const existingUser = await db.get('SELECT id FROM users WHERE userid = ?', userid);
@@ -53,9 +55,9 @@ export default function userRoutes(db: Database) {
             }
 
             const result = await db.run(
-                `INSERT INTO users (name, leg, added_under_id, mobile_no, address, work, remarks, userid, password)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [name, leg, added_under_id, mobile_no, address, work, remarks, userid, password]
+                `INSERT INTO users (name, leg, added_under_id, mobile_no, address, work, remarks, userid, password, sp_value, is_green)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [name, leg, added_under_id, mobile_no, address, work, remarks, userid, password, sp_value || 0, is_green ? 1 : 0]
             );
 
             if (result.lastID) {
@@ -73,7 +75,7 @@ export default function userRoutes(db: Database) {
     // Update user
     router.put('/:id', async (req, res) => {
         try {
-            const user: User = req.body;
+            const user = req.body as User;  // Ensure proper type casting
             
             // If userid is being changed, check if new userid already exists
             if (user.userid) {
@@ -88,17 +90,36 @@ export default function userRoutes(db: Database) {
 
             await db.run(
                 `UPDATE users 
-                 SET name = ?, leg = ?, added_under_id = ?, mobile_no = ?, 
-                     address = ?, work = ?, remarks = ?, userid = ?, password = ?
+                 SET name = ?, 
+                     leg = ?, 
+                     added_under_id = ?, 
+                     mobile_no = ?, 
+                     address = ?, 
+                     work = ?, 
+                     remarks = ?, 
+                     userid = ?, 
+                     password = ?,
+                     sp_value = ?,
+                     is_green = ?
                  WHERE id = ?`,
                 [
-                    user.name, user.leg, user.added_under_id, user.mobile_no,
-                    user.address, user.work, user.remarks, user.userid, user.password,
+                    user.name,
+                    user.leg || null,
+                    user.added_under_id || null,
+                    user.mobile_no || null,
+                    user.address || null,
+                    user.work || null,
+                    user.remarks || null,
+                    user.userid || null,
+                    user.password || null,
+                    user.sp_value || 0,
+                    user.is_green ? 1 : 0,
                     req.params.id
                 ]
             );
             res.json({ id: parseInt(req.params.id), ...user });
         } catch (error) {
+            console.error('Error updating user:', error);
             res.status(500).json({ error: 'Failed to update user' });
         }
     });

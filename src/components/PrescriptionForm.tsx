@@ -144,7 +144,7 @@ const PrescriptionForm: React.FC<PrescriptionFormProps> = ({ initialData, onSave
                                         label="Product"
                                         options={productOptions}
                                         value={row.product_id || ''}
-                                        onChange={(value) => handleProductChange(index, Number(value))}
+                                        onChange={(value) => handleProductChange(index, value || 0)}
                                     />
                                 </TableCell>
                                 <TableCell>
