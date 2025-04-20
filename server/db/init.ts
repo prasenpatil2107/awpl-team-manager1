@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import path from 'path';
 
-// Add this function to handle migrations
+// Modify the migrateDatabase function to include all columns
 async function migrateDatabase(db: Database) {
     try {
         // Backup existing users
@@ -11,7 +11,7 @@ async function migrateDatabase(db: Database) {
         // Drop and recreate users table
         await db.exec('DROP TABLE IF EXISTS users');
         
-        // Create new users table with userid and password columns
+        // Create new users table with all columns
         await db.exec(`
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,16 +24,34 @@ async function migrateDatabase(db: Database) {
                 remarks TEXT,
                 userid TEXT UNIQUE,
                 password TEXT,
+                sp_value DECIMAL(10,2) DEFAULT 0,
+                is_green INTEGER DEFAULT 0,
                 FOREIGN KEY (added_under_id) REFERENCES users(id)
             )
         `);
 
-        // Restore user data
+        // Restore user data with all columns
         for (const user of users) {
             await db.run(
-                `INSERT INTO users (id, name, leg, added_under_id, mobile_no, address, work, remarks)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [user.id, user.name, user.leg, user.added_under_id, user.mobile_no, user.address, user.work, user.remarks]
+                `INSERT INTO users (
+                    id, name, leg, added_under_id, mobile_no, address, 
+                    work, remarks, userid, password, sp_value, is_green
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    user.id, 
+                    user.name, 
+                    user.leg, 
+                    user.added_under_id, 
+                    user.mobile_no, 
+                    user.address, 
+                    user.work, 
+                    user.remarks,
+                    user.userid,
+                    user.password,
+                    user.sp_value || 0,
+                    user.is_green || 0
+                ]
             );
         }
 
@@ -56,8 +74,34 @@ export async function initializeDatabase() {
 
         console.log('Database connected successfully');
 
-        // Run migration
-        await migrateDatabase(db);
+        // Remove the duplicate users table creation and just check if it exists
+        const userTableExists = await db.get(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+        );
+
+        if (!userTableExists) {
+            // Only create the users table if it doesn't exist
+            await db.exec(`
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    leg TEXT CHECK (leg IN ('Bonus', 'Incentive') OR leg IS NULL),
+                    added_under_id INTEGER,
+                    mobile_no TEXT,
+                    address TEXT,
+                    work TEXT,
+                    remarks TEXT,
+                    userid TEXT UNIQUE,
+                    password TEXT,
+                    sp_value DECIMAL(10,2) DEFAULT 0,
+                    is_green INTEGER DEFAULT 0,
+                    FOREIGN KEY (added_under_id) REFERENCES users(id)
+                )
+            `);
+        } else {
+            // If table exists, run migration to ensure all columns are present
+            await migrateDatabase(db);
+        }
 
         // Products table
         await db.exec(`
@@ -130,17 +174,16 @@ export async function initializeDatabase() {
             )
         `);
 
-        // Modify the users table to add sp_value and is_green fields
-        await db.exec(`
-            ALTER TABLE users 
-            ADD COLUMN sp_value DECIMAL(10,2) DEFAULT 0;
-            ALTER TABLE users 
-            ADD COLUMN is_green BOOLEAN DEFAULT 0;
-        `);
-
         return db;
     } catch (error) {
         console.error('Database initialization error:', error);
         throw error;
     }
+}
+
+export async function getDb(): Promise<Database> {
+    return await open({
+        filename: path.join(__dirname, '../database.sqlite'),
+        driver: sqlite3.Database
+    });
 } 
